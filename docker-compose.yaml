@@ -1,0 +1,10 @@
+#version: '3.8'
+services:
+  todo-app:
+    build: .
+    container_name: todo_container
+    ports:
+      - "127.0.0.1:8080:5000"
+    volumes:
+      - /home/fernzugriff/todo_data:/app/data
+    restart: always

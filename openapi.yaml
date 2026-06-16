@@ -1,0 +1,179 @@
+openapi: 3.1.0
+info:
+  title: Todo-Listen-Verwaltung
+  description: "API basierend auf der tabellarischen Endpunkt-Definition"
+  contact:
+    email: alexkowert90@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.1.0
+servers:
+# - url: http://127.0.0.1:5000/
+  - url http://192.168.0.112:8080/
+tags:
+  - name: Listenverwaltung
+paths:
+
+  # GET /todo-lists - alle Listen abrufen
+  /todo-lists:
+    get:
+      summary: Returns all TodoLists
+      responses:
+        '200':
+          description: List of all TodoLists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TodoList'
+
+    post:
+      summary: Creates a new TodoList
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoListInput'
+      responses:
+        '201':
+          description: List created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoList'
+        '400':
+          description: Invalid request body
+
+  # GET /todo-lists/{list_id} - Eintraege einer Liste abrufen
+  # POST /todo-lists/{list_id} - Eintrag hinzufuegen
+  # DELETE /todo-lists/{list_id} - Liste loeschen
+  /todo-lists/{list_id}:
+    parameters:
+      - name: list_id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      summary: Returns all entries of a TodoList
+      responses:
+        '200':
+          description: Entries of the list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TodoEntry'
+        '404':
+          description: List not found
+
+    post:
+      summary: Adds an entry to a TodoList
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoEntryInput'
+      responses:
+        '201':
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoEntry'
+        '400':
+          description: Invalid request body
+        '404':
+          description: List not found
+
+    delete:
+      summary: Deletes a TodoList with all entries
+      responses:
+        '204':
+          description: List deleted
+        '404':
+          description: List not found
+
+  # PATCH /todo-lists/entry/{entry_id} - Eintrag aktualisieren
+  # DELETE /todo-lists/entry/{entry_id} - Eintrag loeschen
+  /todo-lists/entry/{entry_id}:
+    parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    patch:
+      summary: Updates an existing entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoEntryInput'
+      responses:
+        '200':
+          description: Entry updated
+        '400':
+          description: Invalid request body
+        '404':
+          description: Entry not found
+
+    delete:
+      summary: Deletes a single entry
+      responses:
+        '204':
+          description: Entry deleted
+        '404':
+          description: Entry not found
+
+components:
+  schemas:
+
+    TodoListInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    TodoList:
+      allOf:
+        - $ref: '#/components/schemas/TodoListInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+
+    TodoEntryInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    TodoEntry:
+      allOf:
+        - $ref: '#/components/schemas/TodoEntryInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+            list_id:
+              type: string
+              format: uuid

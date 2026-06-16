@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Todo-Listen Verwaltung</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { margin-bottom: 0.3rem; }
+        .flex { display: flex; gap: 30px; align-items: flex-start; }
+        .panel { border: 1px solid #ccc; padding: 10px; border-radius: 4px; min-width: 280px; }
+        ul { padding-left: 18px; }
+        li { margin-bottom: 4px; }
+        button { margin-left: 4px; }
+        input, textarea, select { margin: 2px 0; width: 100%; box-sizing: border-box; }
+        small { color: #666; }
+        .entry-row { display: flex; gap: 6px; align-items: center; }
+        .entry-row span { flex: 1; }
+    </style>
+</head>
+<body>
+    <h1>Todo-Listen Verwaltung</h1>
+    <small>Backend: Aktiv über Docker</small>
+
+    <div class="flex">
+        <!-- Listenverwaltung -->
+        <div class="panel">
+            <h2>Listen</h2>
+            <button onclick="loadLists()">Listen laden</button>
+
+            <h3>Neue Liste</h3>
+            <input id="newListName" placeholder="Listenname">
+            <button onclick="createList()">Liste erstellen</button>
+
+            <h3>Alle Listen</h3>
+            <ul id="listContainer"></ul>
+        </div>
+
+        <!-- Einträge der ausgewählten Liste -->
+        <div class="panel">
+            <h2>Einträge</h2>
+            <div>
+                <label>Aktuelle Liste:</label>
+                <select id="currentListSelect" onchange="onListSelectChange()">
+                    <option value="">– keine –</option>
+                </select>
+            </div>
+
+            <h3>Neuer Eintrag</h3>
+            <input id="newEntryName" placeholder="Name">
+            <textarea id="newEntryDescription" placeholder="Beschreibung"></textarea>
+            <button onclick="createEntry()">Eintrag hinzufügen</button>
+
+            <h3>Einträge der Liste</h3>
+            <ul id="entryContainer"></ul>
+        </div>
+
+        <!-- Eintrag bearbeiten -->
+        <div class="panel">
+            <h2>Eintrag bearbeiten</h2>
+            <small>Eintrag per „Bearbeiten“-Button auswählen</small>
+            <input id="editEntryId" placeholder="Entry ID" readonly>
+            <input id="editEntryName" placeholder="Name">
+            <textarea id="editEntryDescription" placeholder="Beschreibung"></textarea>
+            <button onclick="updateEntry()">Eintrag aktualisieren (PATCH)</button>
+            <button onclick="deleteEntry()">Eintrag löschen (DELETE)</button>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = window.location.origin;
+
+        async function loadLists() {
+            const res = await fetch(`${baseUrl}/todo-lists`);
+            const lists = await res.json();
+
+            const listContainer = document.getElementById("listContainer");
+            const listSelect = document.getElementById("currentListSelect");
+            listContainer.innerHTML = "";
+            listSelect.innerHTML = '<option value="">– keine –</option>';
+
+            lists.forEach(list => {
+                // Liste in UL
+                const li = document.createElement("li");
+                const span = document.createElement("span");
+                span.textContent = `${list.name} (${list.id})`;
+                li.appendChild(span);
+
+                const selectBtn = document.createElement("button");
+                selectBtn.textContent = "Auswählen";
+                selectBtn.onclick = () => selectList(list.id);
+                li.appendChild(selectBtn);
+
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "Löschen";
+                delBtn.onclick = () => deleteList(list.id);
+                li.appendChild(delBtn);
+
+                listContainer.appendChild(li);
+
+                // Liste in Select
+                const opt = document.createElement("option");
+                opt.value = list.id;
+                opt.textContent = list.name;
+                listSelect.appendChild(opt);
+            });
+        }
+
+        async function createList() {
+            const name = document.getElementById("newListName").value.trim();
+            if (!name) {
+                alert("Listenname darf nicht leer sein.");
+                return;
+            }
+
+            await fetch(`${baseUrl}/todo-lists`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ name })
+            });
+
+            document.getElementById("newListName").value = "";
+            loadLists();
+        }
+
+        async function deleteList(listId) {
+            if (!confirm("Liste wirklich löschen?")) return;
+
+            await fetch(`${baseUrl}/todo-lists/${listId}`, {
+                method: "DELETE"
+            });
+
+            const current = document.getElementById("currentListSelect").value;
+            if (current === listId) {
+                document.getElementById("currentListSelect").value = "";
+                document.getElementById("entryContainer").innerHTML = "";
+            }
+
+            loadLists();
+        }
+
+        function selectList(listId) {
+            const select = document.getElementById("currentListSelect");
+            select.value = listId;
+            loadEntriesForCurrentList();
+        }
+
+        function onListSelectChange() {
+            loadEntriesForCurrentList();
+        }
+
+        async function loadEntriesForCurrentList() {
+            const listId = document.getElementById("currentListSelect").value;
+            const container = document.getElementById("entryContainer");
+            container.innerHTML = "";
+
+            if (!listId) return;
+
+            const res = await fetch(`${baseUrl}/todo-lists/${listId}`);
+            if (!res.ok) {
+                container.innerHTML = "<li>Fehler beim Laden der Einträge</li>";
+                return;
+            }
+
+            const entries = await res.json();
+            entries.forEach(entry => {
+                const li = document.createElement("li");
+                li.className = "entry-row";
+
+                const span = document.createElement("span");
+                span.textContent = `${entry.name} (${entry.id}) – ${entry.description || ""}`;
+                li.appendChild(span);
+
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "Bearbeiten";
+                editBtn.onclick = () => fillEditForm(entry);
+                li.appendChild(editBtn);
+
+                const delBtn = document.createElement("button");
+                delBtn.textContent = "Löschen";
+                delBtn.onclick = () => deleteEntryDirect(entry.id);
+                li.appendChild(delBtn);
+
+                container.appendChild(li);
+            });
+        }
+
+        async function createEntry() {
+            const listId = document.getElementById("currentListSelect").value;
+            if (!listId) {
+                alert("Bitte zuerst eine Liste auswählen.");
+                return;
+            }
+
+            const name = document.getElementById("newEntryName").value.trim();
+            const description = document.getElementById("newEntryDescription").value.trim();
+
+            if (!name) {
+                alert("Name des Eintrags darf nicht leer sein.");
+                return;
+            }
+
+            await fetch(`${baseUrl}/todo-lists/${listId}`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ name, description })
+            });
+
+            document.getElementById("newEntryName").value = "";
+            document.getElementById("newEntryDescription").value = "";
+            loadEntriesForCurrentList();
+        }
+
+        function fillEditForm(entry) {
+            document.getElementById("editEntryId").value = entry.id;
+            document.getElementById("editEntryName").value = entry.name;
+            document.getElementById("editEntryDescription").value = entry.description || "";
+        }
+
+        async function updateEntry() {
+            const entryId = document.getElementById("editEntryId").value;
+            if (!entryId) {
+                alert("Kein Eintrag zum Bearbeiten ausgewählt.");
+                return;
+            }
+
+            const name = document.getElementById("editEntryName").value.trim();
+            const description = document.getElementById("editEntryDescription").value.trim();
+
+            const body = {};
+            if (name) body.name = name;
+            if (description) body.description = description;
+
+            if (Object.keys(body).length === 0) {
+                alert("Nichts zu aktualisieren.");
+                return;
+            }
+
+            await fetch(`${baseUrl}/todo-lists/entry/${entryId}`, {
+                method: "PATCH",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body)
+            });
+
+            loadEntriesForCurrentList();
+        }
+
+        async function deleteEntry() {
+            const entryId = document.getElementById("editEntryId").value;
+            if (!entryId) {
+                alert("Kein Eintrag zum Löschen ausgewählt.");
+                return;
+            }
+
+            if (!confirm("Eintrag wirklich löschen?")) return;
+
+            await fetch(`${baseUrl}/todo-lists/entry/${entryId}`, {
+                method: "DELETE"
+            });
+
+            document.getElementById("editEntryId").value = "";
+            document.getElementById("editEntryName").value = "";
+            document.getElementById("editEntryDescription").value = "";
+
+            loadEntriesForCurrentList();
+        }
+
+        async function deleteEntryDirect(entryId) {
+            if (!confirm("Eintrag wirklich löschen?")) return;
+
+            await fetch(`${baseUrl}/todo-lists/entry/${entryId}`, {
+                method: "DELETE"
+            });
+
+            loadEntriesForCurrentList();
+        }
+
+        // Beim Laden der Seite direkt Listen holen
+        window.onload = loadLists;
+    </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+flask
+pyyaml
+flask-swagger-ui

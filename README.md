@@ -85,6 +85,7 @@ Konsolen-Befehl: sudo usermod -aG docker fernzugriff
 4.4 Gruppenrechte für aktuelle Sitzung übernehmen
 
 Konsolen-Befehl: newgrp docker
+
 ---
 # 5. To-Do-Liste im Docker-Container einrichten
 

@@ -1,7 +1,7 @@
 # Deployment einer ToDo-List-Web-Applikation: Dokumentation
----
 > **Fach:** Lernfeld 9 (LF9) | **Klasse:** IFA43 | **Schüler:** Alex Kowert
-> ---
+
+---
 # 1. IP-Adresskonfiguration
 1.1 Aktuelle IP-Adresse ermitteln
 

@@ -1,6 +1,7 @@
 # Deployment einer ToDo-List-Web-Applikation: Dokumentation
 > **Fach:** Lernfeld 9 (LF9) | **Klasse:** IFA43 | **Schüler:** Alex Kowert
 ---
+
 # 1. IP-Adresskonfiguration
 1.1 Aktuelle IP-Adresse ermitteln
 
@@ -57,6 +58,7 @@
 2.6 Besitzrechte und restriktive Zugriffsrechte für das SSH-Verzeichnis konfigurieren
 
 ![alt text](Doc-Images/image-13.png)
+
 ---
 # 3. SSH-Verbindung verwenden
 
@@ -67,6 +69,7 @@
 3.2 Zugriff vom Windows-PC auf Linux Ubuntu
 
 ![alt text](Doc-Images/image-15.png)
+
 ---
 # 4. Docker konfigurieren
 
@@ -120,6 +123,7 @@ Konsolen-Befehl: docker-compose up -d --build
 6.3 ToDo-Liste im Browser mittels SwaggerUI ansteuern
 
     Browser-Eingabe: http://192.168.0.112:8080/swagger/
+
 ---
 # 7. Firewall einrichten
 
@@ -142,6 +146,7 @@ Konsolen-Befehl: sudo ufw enable
 7.4 Überprüfung auf korrekte Konfiguration
 
 ![alt text](Doc-Images/image-20.png)
+
 ---
 # 8. Caddy Reverse-Proxy einrichten, um den Docker-Container vom Internet zu isolieren
 
@@ -215,6 +220,7 @@ Konsolen-Befehl: curl -I --connect-timeout 3 http://192.168.0.112:8080
 Ausgabe: 
 
     curl: (7) Failed to connect to 192.168.0.112 port 8080 after 0 ms: Could not connect to server
+
 ---
 # 9. Server-Monitoring mit Grafana
 

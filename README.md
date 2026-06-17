@@ -263,5 +263,11 @@ Ausgabe:
 9.6 Dashboard auslesen
 
 ![alt text](Doc-Images/image-32.png)
-<br>Prozessor- und Arbeitsspeicherauslastung sind im Normalbereich"# Release v1.0.0" 
-"# Release v1.0.0" 
+<br>Prozessor- und Arbeitsspeicherauslastung sind im Normalbereich"
+
+---
+## Lizenz
+
+Dieses Projekt ist unter der Apache License 2.0 lizenziert.
+
+Der vollständige Lizenztext befindet sich in der Datei `LICENSE`.
